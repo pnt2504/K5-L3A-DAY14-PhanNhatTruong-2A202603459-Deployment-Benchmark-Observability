@@ -81,21 +81,22 @@ Script tự khởi động agent của bạn, gọi API thật, build và chạy
 
 ## Chạy local
 
+Tạo `.env` từ mẫu nếu chưa có, rồi đặt giá trị riêng cho `AGENT_API_KEY` trong file này.
+
 ```bash
-pip install -r requirements.txt
-cp .env.example .env
-
-# Chạy nhanh không cần Docker (cần Redis riêng nếu muốn test rate limit thật)
-AGENT_API_KEY=dev-key uvicorn app.main:app --reload
-
-# Chạy cả agent + redis
-docker compose up --build
-
+cp -n .env.example .env
+docker compose -p k5-day14-final up --build -d
 curl http://localhost:8000/health
-curl -X POST http://localhost:8000/ask \
-     -H "X-API-Key: dev-key" -H "Content-Type: application/json" \
-     -d '{"question": "What is deployment?"}'
+curl http://localhost:8000/ready
+curl http://localhost:8000/ask \
+  -H "X-API-Key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"What is deployment?"}'
 ```
+
+Thay `YOUR_KEY` bằng key trong `.env`. Compose cấp `REDIS_URL` nội bộ cho agent. Đổi `PORT` trong `.env` nếu cổng 8000 đang được dùng. Mặc định agent giới hạn 10 request/phút và ngân sách toàn service là 10 USD/tháng. Có thể đặt thêm `DAILY_BUDGET_USD` để áp dụng đồng thời ngân sách ngày.
+
+Khi chạy trực tiếp, cài dependencies bằng `python -m pip install -r requirements.txt`, đặt `REDIS_URL` trỏ tới một Redis có thể truy cập từ terminal, rồi chạy `python -m uvicorn app.main:app --port 8000 --workers 2`. Khi xong với Docker, chạy `docker compose -p k5-day14-final down`.
 
 ---
 
